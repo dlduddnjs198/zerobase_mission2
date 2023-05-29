@@ -1,4 +1,4 @@
-package com.zerobase.mission2.dto;
+package com.zerobase.mission2.dto.form;
 
 import lombok.*;
 
@@ -7,8 +7,9 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDto {
+public class UserSignUpForm {
     private Long id;
     private String username;
+    private String password;
     private String email;
 }
