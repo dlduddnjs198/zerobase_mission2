@@ -1,8 +1,16 @@
 package com.zerobase.mission2.service;
 
+import com.zerobase.mission2.domain.Review;
+import com.zerobase.mission2.domain.Store;
 import com.zerobase.mission2.domain.User;
+import com.zerobase.mission2.dto.ReservationDto;
+import com.zerobase.mission2.dto.ReviewDto;
+import com.zerobase.mission2.dto.StoreDetailDto;
 import com.zerobase.mission2.dto.StoreDto;
 import com.zerobase.mission2.dto.form.UserSignUpForm;
+import com.zerobase.mission2.repository.ReservationRepository;
+import com.zerobase.mission2.repository.ReviewRepository;
+import com.zerobase.mission2.repository.StoreRepository;
 import com.zerobase.mission2.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +24,9 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final StoreRepository storeRepository;
+    private final ReservationRepository reservationRepository;
+    private final ReviewRepository reviewRepository;
 
     public String userSignUp(UserSignUpForm form) {
 
@@ -40,19 +51,40 @@ public class UserService {
 
     // 앱에서 가게정보를 보여주기
     public List<StoreDto> showStoreList() {
-        return null;
+        return StoreDto.fromEntityList(storeRepository.findAll());
     }
 
     // 세부 가게정보 보여주기
-    public StoreDto showStoreDetail() {
-        return null;
+    public StoreDetailDto showStoreDetail(Long storeId) {
+        StoreDto store = StoreDto.fromEntity(storeRepository.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("id에 해당하는 가게정보를 찾을 수 없습니다.")));
+        List<ReservationDto> reservations = ReservationDto.fromEntityList(reservationRepository.findByStoreId(storeId));
+        List<ReviewDto> reviews = ReviewDto.fromEntityList(reviewRepository.findByStoreId(storeId));
+        return StoreDetailDto.builder()
+                .store(store)
+                .reservations(reservations)
+                .reviews(reviews)
+                .build();
     }
 
     // 가게정보 검색하기
-    public StoreDto searchStore(String name) {
-        return null;
+    public StoreDetailDto searchStore(String name) {
+        return showStoreDetail(storeRepository.findByName(name)
+                .orElseThrow(() -> new RuntimeException("STORE NOT FOUND")).getId());
     }
 
+    // 리뷰 작성하기
+    public String setReview(ReviewDto review){
+        User user = userRepository.findByUsername(review.getUserName()).orElseThrow(() -> new RuntimeException("USER NOT FOUND"));
+        Store store = storeRepository.findByName(review.getStoreName()).orElseThrow(() -> new RuntimeException("STORE NOT FOUND"));
+        reviewRepository.save(Review.builder()
+                        .user(user)
+                        .store(store)
+                        .comment(review.getComment())
+                        .rating(review.getRating())
+                .build());
+        return "리뷰를 작성하였습니다.";
+    }
 
 //    public void customerVerify(String email, String code){
 //        signUpCustomerService.verifyEmail(email, code);
