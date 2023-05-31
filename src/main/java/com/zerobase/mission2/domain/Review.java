@@ -1,11 +1,13 @@
 package com.zerobase.mission2.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 public class Review {
     @Id
@@ -20,6 +22,6 @@ public class Review {
     @JoinColumn(name = "store_id")
     private Store store;
 
-    private int rating;
+    private double rating;
     private String comment;
 }
