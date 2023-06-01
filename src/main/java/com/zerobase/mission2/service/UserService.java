@@ -7,7 +7,10 @@ import com.zerobase.mission2.dto.ReservationDto;
 import com.zerobase.mission2.dto.ReviewDto;
 import com.zerobase.mission2.dto.StoreDetailDto;
 import com.zerobase.mission2.dto.StoreDto;
+import com.zerobase.mission2.dto.form.LoginForm;
+import com.zerobase.mission2.dto.form.SignInForm;
 import com.zerobase.mission2.dto.form.UserSignUpForm;
+import com.zerobase.mission2.exception.CustomException;
 import com.zerobase.mission2.repository.ReservationRepository;
 import com.zerobase.mission2.repository.ReviewRepository;
 import com.zerobase.mission2.repository.StoreRepository;
@@ -16,7 +19,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
+
+import static com.zerobase.mission2.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -28,14 +34,13 @@ public class UserService {
     private final ReservationRepository reservationRepository;
     private final ReviewRepository reviewRepository;
 
+    // 유저 회원가입
     public String userSignUp(UserSignUpForm form) {
-
         if (userRepository.findById(form.getId()).isPresent()) {
-            // exception
-//            throw new CustomException(ErrorCode.ALREADY_REGISTER_USER);
-            throw new RuntimeException("이미 있는 아이디입니다.");
-        } else if (userRepository.findById(form.getId()).isPresent()) {
-            throw new RuntimeException("이미 있는 닉네임입니다.");
+            throw new CustomException(ID_ALREADY_EXIST);
+        }
+        if (userRepository.findById(form.getId()).isPresent()) {
+            throw new CustomException(USERNAME_ALREADY_EXIST);
         } else {
             User user = User.builder()
                     .email(form.getEmail())
@@ -49,6 +54,18 @@ public class UserService {
         }
     }
 
+    // 유저 로그인
+    public LoginForm userSignIn(SignInForm form){
+        User user = userRepository.findById(form.getId()).orElseThrow(() -> new CustomException(ID_UNMATCHED));
+        if(!user.getPassword().equals(form.getPassword())){
+            throw new CustomException(PASSWORD_UNMATCHED);
+        }
+        return LoginForm.builder()
+                .id(user.getId())
+                .loginTime(LocalDateTime.now())
+                .build();
+    }
+
     // 앱에서 가게정보를 보여주기
     public List<StoreDto> showStoreList() {
         return StoreDto.fromEntityList(storeRepository.findAll());
@@ -57,7 +74,7 @@ public class UserService {
     // 세부 가게정보 보여주기
     public StoreDetailDto showStoreDetail(Long storeId) {
         StoreDto store = StoreDto.fromEntity(storeRepository.findById(storeId)
-                .orElseThrow(() -> new RuntimeException("id에 해당하는 가게정보를 찾을 수 없습니다.")));
+                .orElseThrow(() -> new CustomException(STORE_NOT_FOUND)));
         List<ReservationDto> reservations = ReservationDto.fromEntityList(reservationRepository.findByStoreId(storeId));
         List<ReviewDto> reviews = ReviewDto.fromEntityList(reviewRepository.findByStoreId(storeId));
         return StoreDetailDto.builder()
@@ -70,13 +87,13 @@ public class UserService {
     // 가게정보 검색하기
     public StoreDetailDto searchStore(String name) {
         return showStoreDetail(storeRepository.findByName(name)
-                .orElseThrow(() -> new RuntimeException("STORE NOT FOUND")).getId());
+                .orElseThrow(() -> new CustomException(STORE_NOT_FOUND)).getId());
     }
 
     // 리뷰 작성하기
     public String setReview(ReviewDto review){
-        User user = userRepository.findByUsername(review.getUserName()).orElseThrow(() -> new RuntimeException("USER NOT FOUND"));
-        Store store = storeRepository.findByName(review.getStoreName()).orElseThrow(() -> new RuntimeException("STORE NOT FOUND"));
+        User user = userRepository.findByUsername(review.getUserName()).orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        Store store = storeRepository.findByName(review.getStoreName()).orElseThrow(() -> new CustomException(STORE_NOT_FOUND));
         reviewRepository.save(Review.builder()
                         .user(user)
                         .store(store)

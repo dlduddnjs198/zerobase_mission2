@@ -9,9 +9,12 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PartnerSignUpForm {
-    private String password;
+    // 가게 정보
     private String storeName;
     private String location;
     private String description;
+
+    // 일반 유저도 받는 정보
+    private String password;
     private PartnerDto partner;
 }
