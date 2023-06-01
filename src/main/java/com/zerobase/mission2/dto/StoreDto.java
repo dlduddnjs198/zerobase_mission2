@@ -16,7 +16,7 @@ public class StoreDto {
     private String name;
     private String location;
     private String description;
-    private Long partnerId;
+    private String partnerId;
     private String partnerName;
 
     public static StoreDto fromEntity(Store store){
