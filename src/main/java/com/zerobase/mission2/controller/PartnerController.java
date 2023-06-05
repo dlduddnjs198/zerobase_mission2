@@ -1,7 +1,9 @@
 package com.zerobase.mission2.controller;
 
+import com.zerobase.mission2.dto.PartnerIdDto;
 import com.zerobase.mission2.dto.ReservationDto;
 import com.zerobase.mission2.dto.StoreDto;
+import com.zerobase.mission2.dto.StoreIdDto;
 import com.zerobase.mission2.dto.form.LoginForm;
 import com.zerobase.mission2.dto.form.PartnerSignUpForm;
 import com.zerobase.mission2.dto.form.SignInForm;
@@ -45,15 +47,13 @@ public class PartnerController {
 
     // 파트너와 연결된 매장 목록
     @PostMapping("/stores")
-    public ResponseEntity<List<StoreDto>> getStoreList(@RequestBody String partnerId) {
-        return ResponseEntity.ok(partnerService.showStoreList(partnerId));
+    public ResponseEntity<List<StoreDto>> getStoreList(@RequestBody PartnerIdDto partnerId) {
+        return ResponseEntity.ok(partnerService.showStoreList(partnerId.getPartnerId()));
     }
 
     // 예약 정보 확인
     @PostMapping("/reservation")
-    public ResponseEntity<List<ReservationDto>> getStoreReservation(@RequestBody Long storeId) {
-        return ResponseEntity.ok(partnerService.getStoreReservation(storeId));
+    public ResponseEntity<List<ReservationDto>> getStoreReservation(@RequestBody StoreIdDto storeId) {
+        return ResponseEntity.ok(partnerService.getStoreReservation(storeId.getStoreId()));
     }
-
-
 }

@@ -1,7 +1,6 @@
 package com.zerobase.mission2.controller;
 
-import com.zerobase.mission2.dto.StoreDetailDto;
-import com.zerobase.mission2.dto.StoreDto;
+import com.zerobase.mission2.dto.*;
 import com.zerobase.mission2.dto.form.LoginForm;
 import com.zerobase.mission2.dto.form.SignInForm;
 import com.zerobase.mission2.dto.form.UserSignUpForm;
@@ -38,14 +37,31 @@ public class UserController {
 
     // 상점 세부정보 보여주기(하나의 상점 클릭시 진행)
     @GetMapping("/store/detail")
-    public ResponseEntity<StoreDetailDto> getStoreDetail(@RequestBody Long storeId){
-        return ResponseEntity.ok(userService.showStoreDetail(storeId));
+    public ResponseEntity<StoreDetailDto> getStoreDetail(@RequestBody StoreIdDto storeId){
+        return ResponseEntity.ok(userService.showStoreDetail(storeId.getStoreId()));
+    }
+
+    // 상점 예약 진행
+    @PutMapping("/store/reservation")
+    public ResponseEntity<String> getStoreDetail(@RequestBody ReserveRequestDto reserveInfo){
+        return ResponseEntity.ok(userService.reserve(reserveInfo));
+    }
+
+    // 예약 확인
+    @PutMapping("/{reservationId}/confirm-visit")
+    public ResponseEntity<String> confirmVisit(@PathVariable Long reservationId) {
+        return ResponseEntity.ok(userService.confirmVisit(reservationId));
     }
 
     // 상점 검색시 보여주기
     @GetMapping("/store/search")
-    public ResponseEntity<StoreDetailDto> getStoreSearch(@RequestBody String name){
-        return ResponseEntity.ok(userService.searchStore(name));
+    public ResponseEntity<StoreDetailDto> getStoreSearch(@RequestBody StoreNameDto name){
+        return ResponseEntity.ok(userService.searchStore(name.getName()));
     }
 
+    // 리뷰 작성하기
+    @PutMapping("/store/review")
+    public ResponseEntity<String> setReview(@RequestBody ReviewDto review){
+        return ResponseEntity.ok(userService.setReview(review));
+    }
 }

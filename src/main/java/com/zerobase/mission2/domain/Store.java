@@ -17,6 +17,7 @@ public class Store {
     private String name;
     private String location;
     private String description;
+    private Integer tableNum;
 
     @ManyToOne
     @JoinColumn(name = "partner_id")

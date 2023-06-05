@@ -13,13 +13,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReservationDto {
+    private Long reservationId;
     private String userName;
     private LocalDateTime reservationTime;
+    private Integer tableNum;
 
     public static ReservationDto fromEntity(Reservation reservation){
         return ReservationDto.builder()
+                .reservationId(reservation.getId())
                 .userName(reservation.getUser().getUsername())
                 .reservationTime(reservation.getReservationTime())
+                .tableNum(reservation.getTableNum())
                 .build();
     }
 

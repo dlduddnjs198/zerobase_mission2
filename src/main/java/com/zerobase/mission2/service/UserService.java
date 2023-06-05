@@ -1,12 +1,10 @@
 package com.zerobase.mission2.service;
 
+import com.zerobase.mission2.domain.Reservation;
 import com.zerobase.mission2.domain.Review;
 import com.zerobase.mission2.domain.Store;
 import com.zerobase.mission2.domain.User;
-import com.zerobase.mission2.dto.ReservationDto;
-import com.zerobase.mission2.dto.ReviewDto;
-import com.zerobase.mission2.dto.StoreDetailDto;
-import com.zerobase.mission2.dto.StoreDto;
+import com.zerobase.mission2.dto.*;
 import com.zerobase.mission2.dto.form.LoginForm;
 import com.zerobase.mission2.dto.form.SignInForm;
 import com.zerobase.mission2.dto.form.UserSignUpForm;
@@ -18,9 +16,14 @@ import com.zerobase.mission2.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import static com.zerobase.mission2.exception.ErrorCode.*;
 
@@ -38,12 +41,9 @@ public class UserService {
     public String userSignUp(UserSignUpForm form) {
         if (userRepository.findById(form.getId()).isPresent()) {
             throw new CustomException(ID_ALREADY_EXIST);
-        }
-        if (userRepository.findById(form.getId()).isPresent()) {
-            throw new CustomException(USERNAME_ALREADY_EXIST);
         } else {
             User user = User.builder()
-                    .email(form.getEmail())
+                    .phone(form.getPhone())
                     .id(form.getId())
                     .password(form.getPassword())
                     .username(form.getUsername())
@@ -101,6 +101,61 @@ public class UserService {
                         .rating(review.getRating())
                 .build());
         return "리뷰를 작성하였습니다.";
+    }
+
+    // 예약하기
+    @Transactional
+    public String reserve(ReserveRequestDto reserveInfo){
+        // 해당 가게의 예약정보 가져오고 정렬
+        List<ReservationDto> reservations = ReservationDto.fromEntityList(reservationRepository.findByStoreId(reserveInfo.getStoreId()));
+        Collections.sort(reservations, Comparator.comparing(ReservationDto::getReservationTime));
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // 가게정보
+        Store store = storeRepository.findById(reserveInfo.getStoreId()).orElseThrow(() -> new CustomException(STORE_NOT_FOUND));
+        LocalDateTime local_time = reserveInfo.getTime();
+
+        // 유저정보
+        User user = userRepository.findByUsername(reserveInfo.getUserName())
+                .orElseThrow(() -> new CustomException(USER_NOT_FOUND));
+        String date = local_time.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        int time = local_time.getHour();
+
+        // 해당 날짜, 시간, 테이블에 이미 예약이 진행되었는지 확인
+        for(ReservationDto reservation : reservations){
+            String checkDate = reservation.getReservationTime().format(DateTimeFormatter.ISO_LOCAL_DATE);
+            int checkTime = reservation.getReservationTime().getHour();
+            if(checkDate.equals(date) && checkTime==time && Objects.equals(reservation.getTableNum(), reserveInfo.getTableNum())){
+                return "해당 테이블은 이미 예약이 되어있는 상태입니다.";
+            }else if(reservation.getReservationTime().isBefore(now)){ // 지난 예약은 지우기
+                reservationRepository.deleteById(reservation.getReservationId());
+            }
+        }
+
+        // 없으면 저장
+        reservationRepository.save(Reservation.builder()
+                        .user(user)
+                        .store(store)
+                        .reservationTime(local_time)
+                        .tableNum(reserveInfo.getTableNum())
+                        .build());
+
+        return "예약이 완료되었습니다.";
+    }
+
+    // 예약 확인
+    public String confirmVisit(Long reservationId){
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new CustomException(RESERVATION_NOT_FOUND));
+        LocalDateTime now = LocalDateTime.now();
+
+        if (reservation.getReservationTime().minusMinutes(10).isBefore(now)) {
+            reservationRepository.deleteById(reservation.getId());
+            return "방문이 확인되었습니다.";
+        } else {
+            return "예약 시간 10분 전에 도착해야 방문을 확인할 수 있습니다.";
+        }
     }
 
 //    public void customerVerify(String email, String code){
