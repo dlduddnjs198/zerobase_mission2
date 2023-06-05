@@ -18,6 +18,7 @@ public class StoreDto {
     private String description;
     private String partnerId;
     private String partnerName;
+    private Integer tableNum;
 
     public static StoreDto fromEntity(Store store){
         return StoreDto.builder()
@@ -27,6 +28,7 @@ public class StoreDto {
                 .description(store.getDescription())
                 .partnerId(store.getPartner().getId())
                 .partnerName(store.getPartner().getUsername())
+                .tableNum(store.getTableNum())
                 .build();
     }
 
